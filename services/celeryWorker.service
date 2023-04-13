@@ -1,0 +1,17 @@
+[Unit]
+Description=Celery Worker
+After=network.target 
+
+[Service]
+Type=simple
+WorkingDirectory=/home/baltikum/Documents/djangoBackend
+ExecStart=/home/baltikum/.local/bin/celery -A djangoBackend worker -l info
+User=baltikum
+Group=baltikum
+Restart=on-failure
+SyslogIdentifier=
+RestartSec=5
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target
