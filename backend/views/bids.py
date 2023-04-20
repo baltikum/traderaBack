@@ -3,6 +3,7 @@ from backend.models import Biddings
 from django.http import JsonResponse,HttpResponseBadRequest
 from django.forms import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
+from backend.tasks import place_bid
 
 @csrf_exempt
 def get_bidding(request, id):
@@ -36,7 +37,12 @@ def insert_bid(request):
                 highest_bid=highest_bid,
                 ends=ends
             )
+            
             new_bid.save()
+            
+            booking = place_bid.apply_async(args=[highest_bid,auction_id,ends], eta=ends)
+            booking.revoke()
+            
             return JsonResponse({'message': 'Bid inserted successfully.'}, status=201)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)

@@ -153,3 +153,9 @@ def set_ending_booleans():
         if time_diff < timedelta(days=2):
             entry.ends_soon = True
             entry.save()
+            
+@shared_task
+def place_bid(bid,item,time): 
+    print(f'Putting {bid} on {item} at {time}. Time is {datetime.now()}')
+        
+    
