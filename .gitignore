@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 lib/python3.10/site-packages/
-
+bin/
 # Local development settings
 *.env
 *.sqlite3
