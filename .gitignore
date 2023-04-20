@@ -2,7 +2,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+
+
 lib/python3.10/site-packages/
+lib64
+
 bin/
 # Local development settings
 *.env
