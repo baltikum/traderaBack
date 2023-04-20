@@ -7,7 +7,8 @@ __pycache__/
 
 lib/python3.10/site-packages/
 lib64
-
+pyvenv.cfg
+celerybeat-schedule
 bin/
 # Local development settings
 *.env
