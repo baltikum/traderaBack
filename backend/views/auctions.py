@@ -58,7 +58,30 @@ def highlight_auction(request,id):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return HttpResponseBadRequest('This endpoint only accepts PATCH requests.')
-@csrf_exempt    
+@csrf_exempt
+def bidding_on_auction(request,id,state):
+    if request.method == 'PATCH':
+        if state in ["True","False"]:
+            try:
+                auction = Auctions.objects.get(id=id)
+                auction.bidding_on = state
+                auction.save()
+                return JsonResponse({'message': 'Auction updated successfully.'}, status=200)
+            except Auctions.DoesNotExist:
+                return JsonResponse({'error': 'Auction not found.'}, status=404)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return HttpResponseBadRequest('This endpoint only accepts PATCH requests.')
+
+
+
+
+
+    """
+    
+    
+    @csrf_exempt    
 def insert_auction(request):
     if request.method == 'POST':
         try:
@@ -80,8 +103,12 @@ def insert_auction(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return HttpResponseBadRequest('This endpoint only accepts POST requests.')
+    
+
+
+
 @csrf_exempt   
-def update_auction(request,id):
+def update_auction(request,id): 
     if request.method == 'PATCH':
         try:
             auction = Auctions.objects.get(id=id)
@@ -94,4 +121,8 @@ def update_auction(request,id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
-        return HttpResponseBadRequest('This endpoint only accepts PUT requests.')
+        return HttpResponseBadRequest('This endpoint only accepts PATCH requests.')
+    """
+
+
+

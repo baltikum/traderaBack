@@ -14,6 +14,7 @@ from pathlib import Path
 
 from datetime import timedelta
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +29,6 @@ SECRET_KEY = 'django-insecure-k^2=10p##8t8u4s7s1o7020@yushtp30)^m#(uhm7rtlpmh_nn
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -54,15 +54,43 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'fetch_and_store_auctions': {
         'task': 'backend.tasks.fetch_and_store_auctions',
-        'schedule': timedelta(minutes=10),
+        'schedule': timedelta(minutes=1),
     },
     'set_ending_booleans': {
         'task': 'backend.tasks.set_ending_booleans',
-        'schedule': timedelta(minutes=120),
+        'schedule': timedelta(minutes=1),
+    },
+    'check_for_active_bids': {
+        'task': 'backend.tasks.check_for_active_bids',
+        'schedule': timedelta(minutes=1),
     },
 }
 
-
+CORS_ALLOWED_ORIGINS = [
+    # Add the origins that should be allowed to access your backend
+    'http://localhost:3000',
+    'http://localhost:8000',
+    # ...
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 CORS_ORIGIN_ALLOW_ALL = True
 

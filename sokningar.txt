@@ -1,0 +1,49 @@
+ id |            term            | category | average_price | highest_price | lowest_price 
+----+----------------------------+----------+---------------+---------------+--------------
+  1 | ibanez exfx                |     2104 |               |               |             
+  2 | gretsch                    |     2104 |               |               |             
+  3 | teisco                     |     2104 |               |               |             
+  5 | bc rich                    |     2104 |               |               |             
+  6 | jackson                    |     2104 |               |               |             
+  7 | charvel                    |     2104 |               |               |             
+  8 | växter som mat och medicin |       11 |               |               |             
+  9 | växter som mat & medicin   |       11 |               |               |             
+ 10 | ebbe schön troll           |       11 |               |               |             
+ 11 | ebbe schön häxkonster      |       11 |               |               |             
+ 12 | retropie                   |       12 |               |               |             
+ 13 | 13 steps to mentalism      |       11 |               |               |             
+ 14 | bildhuggeri                |       11 |               |               |             
+ 15 | böhse onkelz               |        0 |               |               |             
+ 16 | carhartt jacka bartlett    |       16 |               |               |             
+ 17 | carta marina               |        0 |               |               |             
+ 18 | Cowboy boots               |   340304 |               |               |             
+ 19 | destructo                  |       18 |               |               |             
+ 22 | logikanalysator            |        0 |               |               |             
+ 23 | infernal war               |       21 |               |               |             
+ 24 | mathmos lunar              |        0 |               |               |             
+ 25 | pipboken                   |       11 |               |               |             
+ 26 | det vilda köket            |       11 |               |               |             
+ 27 | från stock till stuga      |       11 |               |               |             
+ 28 | nokia tough                |       26 |               |               |             
+ 29 | ölhävers                   |        0 |               |               |             
+ 30 | Yamaha wxa-50              |       17 |               |               |             
+ 31 | xilinx                     |        0 |               |               |             
+ 32 | vänster hand och motsols   |       11 |               |               |             
+ 33 | Vildvuxet                  |       11 |               |               |             
+ 34 | Vildplockat                |       11 |               |               |             
+ 35 | variax                     |     2104 |               |               |             
+ 36 | så röker du kött och fisk  |       11 |               |               |             
+ 37 | sparkfun                   |       18 |               |               |             
+ 38 | Sign of the southern cross |        0 |               |               |             
+ 39 | practical mental magic     |       11 |               |               |             
+ 40 | vanderbilt spc             |   343367 |               |               |             
+ 41 | esp nv                     |     2104 |               |               |             
+ 42 | digital discovery          |        0 |               |               |             
+ 43 | heimskringla               |       11 |               |               |             
+ 44 | edda snorre                |       11 |               |               |             
+ 45 | bygga grund                |       11 |               |               |             
+ 46 | digilent                   |        0 |               |               |             
+ 47 | hängselbyxor carhartt      |   302074 |               |               |             
+ 48 | knallpulver                |   302571 |               |               |             
+ 49 | knallpulverpistol          |   302571 |               |               |             
+ 50 | häxor och trolldom         |       11 | 

@@ -21,6 +21,7 @@ class Auctions(models.Model):
     highlighted = models.BooleanField(default=False)
     removed = models.BooleanField(default=False)
     bidding_on = models.BooleanField(default=False)
+    ended = models.BooleanField(default=False)
     def __str__(self):
         return self.name
 

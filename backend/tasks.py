@@ -3,159 +3,134 @@
 from __future__ import absolute_import,unicode_literals
 from celery import shared_task
 
-from .models import Auctions,Searches
+from .models import Auctions,Searches,Biddings
 from bs4 import BeautifulSoup
 import requests,json
 from os import path
 from datetime import datetime,timedelta,timezone
-import pytz
+import time
 
-active_searches = Searches.objects.all()
-search_data_hash = None
-found_search_data = {}
+
+
+
+from selenium import webdriver 
+from selenium.webdriver.chrome.options import Options
+import concurrent.futures
+
 import hashlib
 
-def parse_datetime(datetime_str):
+from .task_searcher import parse_datetime,add_new_auction,update_auctions,do_search,load_active_searches,insert_auction
+from .task_bidder import login_function, load_item, bid_function
+          
+list_of_booked_biddings = []
+taken_biddings = {}
+biddings_data_hash = None
+
+active_searches = load_active_searches()
+search_data_hash_list = []
+found_search_data = {}
+
+def bidding_thread(item, bid):
     try:
-        dt = datetime.fromisoformat(datetime_str)
-    except ValueError:
-        dt = datetime.fromisoformat(datetime_str[:26])
-    dt = dt.replace(tzinfo=timezone.utc)
-    return dt
-
-def add_new_auction(data):
-    start_time = datetime.now()
-    end_date = parse_datetime(data['endDate'])
-    new_auction = Auctions(
-        id = data['itemId'],
-        name = data['shortDescription'], 
-        description = data['shortDescription'], 
-        image_url = data['imageUrl'], 
-        item_url = data['itemUrl'], 
-        price = data['price'], 
-        total_bids = data['totalBids'], 
-        seller_alias = data['sellerAlias'],
-        search_term = data['search_term'],
-        auction_category  = data['auction_category'], 
-        end_date = end_date,
-        auction_type = True, 
-        start_date = start_time,
-        new_item = True,
-        bidding_on = False,
-        ending_soon = False,
-        highlighted = False,
-        removed = False
-    )
-    new_auction.save()
-    return True, str(new_auction)
-
-def update_auctions(data):
-    id_array = list(data.keys())
-    existing_auctions = Auctions.objects.filter(id__in=id_array)
-    new_ids = set(id_array) - set(existing_auctions.values_list('id', flat=True))
-    
-    count = 0
-    for entry in new_ids:
-        res,text = add_new_auction(data[entry])
-        count += 1 
-    print(f'{count} auctions were inserted.')
-    
-    count = 0
-    for auction in existing_auctions:
-        auction.price = data[auction.id]['price']
-        auction.total_bids = data[auction.id]['totalBids']
-        timezone = pytz.UTC
-        now = timezone.localize(datetime.now())
-        if (auction.end_date - now) < timedelta(days=2):
-            auction.ending_soon = True
-        auction.save()
-        count += 1   
-    print(f'{count} auctions were updated.')
+        #Start webdriver
+        chrome_options = Options()
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--headless")
+        browser = webdriver.Chrome(options=chrome_options)
+        time.sleep(3)    
+        if not login_function(browser):
+            print('LOGIN FAILED')
+            result = False
+        else:
+            result = bid_function(browser,item,bid)
+            browser.close()  #quit() ?? stänger den även de utanför tråden ???  
+        return f"Bidding was : {result}"
+    except:
+        browser.close()
+        return "Problem in bidding thread, browser closed."
 
 
 
-    
-    
-    '''
-        new_auctions = Auctions.objects.filter(id__in=new_ids)
-        
-        count = 0
-        processed_auctions = Auctions.objects.filter(search_term=new.search_term, auction_category=new.auction_category)
-        
-        my_objects = Auctions.objects.filter(id__in=id_array)
-        my_objects = Auctions.objects.exclude(id__in=id_array)
-        
-        all_processed_auctions = Auctions.objects.filter(search_term=new.search_term, auction_category=new.auction_category)
-        
-        difference_queryset = queryset1.exclude(id__in=queryset2.values_list('auction_id', flat=True))
-        '''
-       
-def do_search(search_term, auction_category):
-    global found_search_data
-    default_url = "https://www.tradera.com/search?q="
-    category = "&categoryId="
-    url = f"{default_url}{search_term}{category}{auction_category}"
 
-    try:
-        r = requests.get(url)
-        r.raise_for_status()
-        s = BeautifulSoup(r.content, features="lxml")
-        script = s.find('script', attrs={'id': '__NEXT_DATA__'})
-        if script:
-            js = json.loads(script.text)
-            itemsArray = js['props']['pageProps']['initialState']['discover']['items']
-            if itemsArray:
-                for entry in itemsArray:
-                    entry['search_term'] = search_term
-                    entry['auction_category'] = auction_category
-                    found_search_data[entry['itemId']] = entry
-            
-        return True
-
-    except Exception as e:
-        print(e)
-        return False
-
-def load_active_searches():
-    global searches
-    searches = Searches.objects.all()
-    
-
-           
+#Called by settings to search for new auctions         
 @shared_task
 def fetch_and_store_auctions():
-    global found_search_data,search_data_hash,active_searches
+    global found_search_data,search_data_hash_list,active_searches
+    active_searches = load_active_searches()
     
-    load_active_searches()
-    
-    for entry in active_searches:
-        res = do_search(entry.term, entry.category)
-        
-    dict_str = str(found_search_data).encode('utf-8')
-    hash_obj = hashlib.md5(dict_str)
-    hash_value = hash_obj.hexdigest()
-    
-    if hash_value != search_data_hash :
-        update_auctions(found_search_data)
-        search_data_hash = hash_value
-    else:
-        print('No changes to database.')
+    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
+        futures = [ executor.submit(do_search,entry.term, entry.category) 
+                        for entry in active_searches ] 
 
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            result = future.result()
+            
+            if len(search_data_hash_list) == 0 :
+                search_data_hash_list = [0] * len(active_searches)
+                
+            dict_str = str(result).encode('utf-8')
+            hash_obj = hashlib.md5(dict_str)
+            hash_value = hash_obj.hexdigest()
+            if hash_value != search_data_hash_list[i]:
+                updates = [ executor.submit(insert_auction, entry) 
+                    for entry in result ]
+                search_data_hash_list[i] = hash_value
+ 
+    if updates :
+        return "Changes were made to DB."
+    else:        
+        return 'No changes to database.'
+        
+#Called by settings to set auction booleans.
 @shared_task
 def set_ending_booleans():
-    actives = Auctions.objects.filer(removed=False)
-    now = datetime.utcnow()
+    actives = Auctions.objects.filter(removed=False)
+    now = datetime.now(timezone.utc)
     for entry in actives:
-        
-        datetime_obj = datetime.fromisoformat(entry.end_date[:-1])
-        time_diff = datetime_obj - now
-        
+        time_diff = entry.end_date - now
         if time_diff < timedelta(days=2):
             entry.ends_soon = True
-            entry.save()
-            
+        if time_diff < timedelta(minutes=-1):
+            entry.ended = True
+        entry.save()
+    return "Ending booleans updated."
+           
+#checks if < 20min   on any auction with bid, starts bidding thread.     
 @shared_task
-def place_bid(bid,item,time): 
-    print(f'Putting {bid} on {item} at {time}. Time is {datetime.now()}')
-        
+def check_for_active_bids():
+    global list_of_booked_biddings, taken_biddings
+    biddings = Biddings.objects.all()
     
+    if len(biddings) > 0 :
+        now = datetime.now(timezone.utc)
+        for entry in biddings:
+            time_diff = entry.ends - now
+            if time_diff < timedelta(0) :
+                Biddings.objects.filter(auction=entry.auction.delete())
+                return f"Removed old bidding {entry.auction}"
+                
+            elif time_diff < timedelta(minutes=20):
+                if not taken_biddings.get(entry.auction) :
+                    taken_biddings[entry.auction] = entry                
+                    res = bidding_thread(entry.auction, entry.highest_bid)
+                    if res:
+                        taken_biddings.pop(entry.auction)
+                        entry.delete()
+                        return f"{entry.auction} was bid on with {entry.highest_bid}."
+                    else:
+                        return f"Failed to bid on {entry.auction}."
+                    
+                print("Already handeld by another thread.")
+            else:
+                print(f"Timediff for {entry.auction} longer than 20 minutes.")
+        
+    else:
+        return "No queued biddings."
+         
+ #   list_of_booked_biddings = sorted(biddings, key=lambda x: x['diff'])  
+
+
+
+
+                
+

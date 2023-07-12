@@ -3,7 +3,8 @@ from backend.models import Biddings
 from django.http import JsonResponse,HttpResponseBadRequest
 from django.forms import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
-from backend.tasks import place_bid
+import json
+
 
 @csrf_exempt
 def get_bidding(request, id):
@@ -25,23 +26,19 @@ def get_all_biddings(request):
     else:
         return JsonResponse({'error': 'This endpoint only accepts GET requests.'}, status=400)
 @csrf_exempt    
-def insert_bid(request):
+def insert_bid(request,id):
     if request.method == 'POST':
         try:
-            auction_id = request.POST.get('auction_id')
-            highest_bid = request.POST.get('highest_bid')
-            ends = request.POST.get('ends')
-            
+            data = json.loads(request.body)
+            auction_id = data.get('auction_id')
+            highest_bid = data.get('highest_bid')
+            ends = data.get('ends')
             new_bid = Biddings(
                 auction_id=auction_id,
                 highest_bid=highest_bid,
                 ends=ends
             )
-            
             new_bid.save()
-            
-            booking = place_bid.apply_async(args=[highest_bid,auction_id,ends], eta=ends)
-            booking.revoke()
             
             return JsonResponse({'message': 'Bid inserted successfully.'}, status=201)
         except Exception as e:
@@ -52,14 +49,13 @@ def insert_bid(request):
 def delete_bid(request,id):
     if request.method == 'DELETE':
         try:
-            Biddings.objects.filter(id=id).delete()
+            Biddings.objects.filter(auction=id).delete()
             return JsonResponse({'message': 'Bid deleted successfully.'}, status=204)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return HttpResponseBadRequest('This endpoint only accepts DELETE requests.',status=400)
-@csrf_exempt      
-def update_bid(request):
+
     if request.method == 'PATCH':
         try:
             auction_id = request.POST.get('auction_id')
